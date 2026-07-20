@@ -515,8 +515,9 @@
       </select>
       <select id="filter-links" aria-label="Filter by links">
         <option value="">All Students</option>
-        <option value="has-url">With Publication Website Link</option>
-        <option value="has-journal">With Journal Publication Link</option>
+        <option value="has-url">With Publication Link</option>
+        <option value="has-website">With Link to Publication Website</option>
+        <option value="has-journal">With Publication Journal</option>
       </select>
     </div>
     <span id="result-count"></span>
@@ -554,6 +555,7 @@
   const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
   const isURL = s => { try { return /^https?:\/\//.test(s) && Boolean(new URL(s)); } catch { return false; } };
   const isISEFStatus = s => s && ['ISEF Winner', 'ISEF Finalist'].includes(s.trim());
+  const nonBlank = v => !!String(v == null ? '' : v).trim();
 
   // Safely extract a valid URL from a field that may arrive as a string or array from Airtable
   function toURL(val) {
@@ -589,11 +591,17 @@
       : esc(info.text);
   }
 
-  // "With Publication Link" = a direct link to the student's own work: their
-  // publication link or their ISEF publication link. The journal-website link is
-  // deliberately excluded — it points to the venue, not the student's work.
+  // "With Publication Link" = the student has a direct link to their own work:
+  // Link to Publication is not empty OR ISEF Publication Link is not empty.
+  // This is presence-based (not empty), not URL-validity-based.
   function hasPublicationLink(s) {
-    return !!(toURL(s.publicationLink) || toURL(s.isefPublicationLink));
+    return nonBlank(s.publicationLink) || nonBlank(s.isefPublicationLink);
+  }
+
+  // "With Link to Publication Website" = the student has NEITHER of the two links
+  // above, but the Journal of Publication Website field contains at least one link.
+  function hasJournalWebsiteOnly(s) {
+    return !hasPublicationLink(s) && extractLinks(s.journalWebsite).length > 0;
   }
 
   // Reformats "2023 Summer Cohort" → "Summer 2023". Falls back to the raw
@@ -793,6 +801,7 @@
       if (cohort   && s.cohort !== cohort) return false;
       if (country  && s.country !== country) return false;
       if (links === 'has-url' && !hasPublicationLink(s)) return false;
+      if (links === 'has-website' && !hasJournalWebsiteOnly(s)) return false;
       if (links === 'has-journal' && !getJournalInfo(s)) return false;
       if (q) {
         const hay = [s.studentName, s.researchQuestion, s.mentorField, s.journal,
@@ -880,16 +889,21 @@
           : esc(journalInfo.text))
       : '';
 
-    const pubURL = isISEFStatus(s.isefStatus)
-      ? (toURL(s.isefPublicationLink) || toURL(s.publicationLink))
-      : (toURL(s.publicationLink) || toURL(s.isefPublicationLink));
-    const pubVal = pubURL
-      ? `<a href="${esc(pubURL)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(pubURL)}</a>`
-      : '';
+    // Direct link to the student's own work, presence-based: prefer the ISEF link
+    // for ISEF students, otherwise the publication link, falling back to whichever
+    // is actually filled in.
+    const workLink = isISEFStatus(s.isefStatus)
+      ? (nonBlank(s.isefPublicationLink) ? s.isefPublicationLink : s.publicationLink)
+      : (nonBlank(s.publicationLink) ? s.publicationLink : s.isefPublicationLink);
+    const workURL = toURL(workLink);
+    const pubVal = workURL
+      ? `<a href="${esc(workURL)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(workURL)}</a>`
+      : (nonBlank(workLink) ? esc(workLink) : '');
 
-    // Fallback ONLY when the student has no direct publication/ISEF link. Render
-    // every distinct journal-website link, links only (surrounding notes stripped).
-    const journalSiteVal = pubURL
+    // Fallback shown ONLY when the student has neither a publication nor an ISEF
+    // link. Uses the link(s) only from the journal-website field — notes stripped,
+    // distinct links de-duplicated.
+    const journalSiteVal = hasPublicationLink(s)
       ? ''
       : extractLinks(s.journalWebsite)
           .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`)
