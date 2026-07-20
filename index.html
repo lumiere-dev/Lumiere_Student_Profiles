@@ -515,8 +515,8 @@
       </select>
       <select id="filter-links" aria-label="Filter by links">
         <option value="">All Students</option>
-        <option value="has-url">With Publication Link</option>
-        <option value="has-journal">With Journal Publication</option>
+        <option value="has-url">With Publication Website Link</option>
+        <option value="has-journal">With Journal Publication Link</option>
       </select>
     </div>
     <span id="result-count"></span>
@@ -561,6 +561,17 @@
     return isURL(val) ? val : '';
   }
 
+  // The journal-website lookup arrives as multiline text that may hold more than
+  // one link alongside notes like "(Do not use website for submission)". Pull out
+  // every http(s) link, drop the surrounding text, strip trailing punctuation,
+  // and de-duplicate so only distinct URLs remain.
+  function extractLinks(val) {
+    if (Array.isArray(val)) val = val.join(' ');
+    const matches = String(val || '').match(/https?:\/\/[^\s"'<>()]+/g) || [];
+    const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
+    return [...new Set(cleaned)];
+  }
+
   // Journal of Acceptance if present, otherwise Journal of Resubmission.
   // Returns null if neither is set.
   function getJournalInfo(s) {
@@ -578,9 +589,11 @@
       : esc(info.text);
   }
 
-  // Returns true if the student has at least one valid URL across all link fields
-  function hasAnyURL(s) {
-    return !!(toURL(s.journal) || toURL(s.journalResubmission) || toURL(s.publicationLink) || toURL(s.isefPublicationLink));
+  // "With Publication Link" = a direct link to the student's own work: their
+  // publication link or their ISEF publication link. The journal-website link is
+  // deliberately excluded — it points to the venue, not the student's work.
+  function hasPublicationLink(s) {
+    return !!(toURL(s.publicationLink) || toURL(s.isefPublicationLink));
   }
 
   // Reformats "2023 Summer Cohort" → "Summer 2023". Falls back to the raw
@@ -779,7 +792,7 @@
       if (researchField && s.mentorField !== researchField) return false;
       if (cohort   && s.cohort !== cohort) return false;
       if (country  && s.country !== country) return false;
-      if (links === 'has-url' && !hasAnyURL(s)) return false;
+      if (links === 'has-url' && !hasPublicationLink(s)) return false;
       if (links === 'has-journal' && !getJournalInfo(s)) return false;
       if (q) {
         const hay = [s.studentName, s.researchQuestion, s.mentorField, s.journal,
@@ -867,10 +880,20 @@
           : esc(journalInfo.text))
       : '';
 
-    const pubURL = isISEFStatus(s.isefStatus) ? toURL(s.isefPublicationLink) : toURL(s.publicationLink);
+    const pubURL = isISEFStatus(s.isefStatus)
+      ? (toURL(s.isefPublicationLink) || toURL(s.publicationLink))
+      : (toURL(s.publicationLink) || toURL(s.isefPublicationLink));
     const pubVal = pubURL
       ? `<a href="${esc(pubURL)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(pubURL)}</a>`
       : '';
+
+    // Fallback ONLY when the student has no direct publication/ISEF link. Render
+    // every distinct journal-website link, links only (surrounding notes stripped).
+    const journalSiteVal = pubURL
+      ? ''
+      : extractLinks(s.journalWebsite)
+          .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`)
+          .join('<br>');
 
     $('modal-body').innerHTML = [
       `<div class="modal-section" id="ai-journey-section">
@@ -880,7 +903,9 @@
       s.researchQuestion ? '<div class="modal-divider"></div>' + section('Research Question', esc(s.researchQuestion), true) : '',
       journalVal ? '<div class="modal-divider"></div>' + section(journalInfo.label, journalVal) : '',
       s.isefStatus ? '<div class="modal-divider"></div>' + section('ISEF Status', esc(s.isefStatus)) : '',
-      pubVal ? '<div class="modal-divider"></div>' + section('Publication', pubVal) : '',
+      pubVal
+        ? '<div class="modal-divider"></div>' + section('Publication', pubVal)
+        : (journalSiteVal ? '<div class="modal-divider"></div>' + section('Journal of Publication Website', journalSiteVal) : ''),
     ].join('');
 
     $('modal-backdrop').classList.add('open');
