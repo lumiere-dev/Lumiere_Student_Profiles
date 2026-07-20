@@ -517,7 +517,7 @@
         <option value="">All Students</option>
         <option value="has-url">With Publication Link</option>
         <option value="has-website">With Link to Publication Website</option>
-        <option value="has-journal">With Publication Journal</option>
+        <option value="has-journal">With Journal Publication</option>
       </select>
     </div>
     <span id="result-count"></span>
@@ -572,6 +572,52 @@
     const matches = String(val || '').match(/https?:\/\/[^\s"'<>()]+/g) || [];
     const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
     return [...new Set(cleaned)];
+  }
+
+  // When the journal-website field holds several DIFFERENT links, keep only the one
+  // for the journal of acceptance. The field carries URLs only (never the journal
+  // name), so we score each link against the acceptance journal's name: its acronym
+  // (e.g. "International Journal of High School Research" -> "ijhsr", matching
+  // ijhsr.terrajournals.org) and its distinctive words (e.g. "Oxford" -> oxfordjss.org,
+  // "China"/"Hands" -> chinahandsmagazine.org). Common filler words are ignored so
+  // generic terms like "journal" or "research" don't cause false matches.
+  const NAME_STOP = new Set(['the','of','and','for','in','on','a','an','to','by','with',
+    'journal','journals','conference','conferences','international','national','academic',
+    'research','review','reviews','student','students','science','sciences','scientific',
+    'high','school','annual','proceedings','society','association','world','global','open',
+    'letters','advances','studies','education']);
+  const ARTICLE_STOP = new Set(['the','of','and','for','in','on','a','an','to','by','with']);
+
+  const urlBlob = u => u.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  function nameTokens(name) {
+    return (String(name || '').toLowerCase().match(/[a-z0-9]+/g) || [])
+      .filter(t => t.length >= 3 && !NAME_STOP.has(t));
+  }
+  function nameAcronym(name) {
+    return (String(name || '').toLowerCase().match(/[a-z]+/g) || [])
+      .filter(w => !ARTICLE_STOP.has(w)).map(w => w[0]).join('');
+  }
+  function scoreURL(url, name) {
+    const blob = urlBlob(url);
+    let score = 0;
+    for (const t of nameTokens(name)) if (blob.includes(t)) score += 2;
+    const ac = nameAcronym(name);
+    if (ac.length >= 3 && blob.includes(ac)) score += 3;
+    return score;
+  }
+  // Returns the journal-website link(s) to show: [] when none, the single distinct
+  // link when there's only one, or the best match to the journal of acceptance when
+  // there are several. Falls back to resubmission name, then the first link.
+  function pickJournalWebsite(s) {
+    const links = extractLinks(s.journalWebsite);
+    if (links.length <= 1) return links;
+    const name = s.journal || s.journalResubmission || '';
+    let best = '', bestScore = 0;
+    if (name) for (const u of links) {
+      const sc = scoreURL(u, name);
+      if (sc > bestScore) { bestScore = sc; best = u; }
+    }
+    return [best || links[0]];
   }
 
   // Journal of Acceptance if present, otherwise Journal of Resubmission.
@@ -905,7 +951,7 @@
     // distinct links de-duplicated.
     const journalSiteVal = hasPublicationLink(s)
       ? ''
-      : extractLinks(s.journalWebsite)
+      : pickJournalWebsite(s)
           .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`)
           .join('<br>');
 
