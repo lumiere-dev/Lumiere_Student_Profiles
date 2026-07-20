@@ -517,6 +517,7 @@
         <option value="">All Students</option>
         <option value="has-url">With Publication Link</option>
         <option value="has-website">With Link to Publication Website</option>
+        <option value="has-journal">With Journal Publication</option>
       </select>
     </div>
     <span id="result-count"></span>
@@ -569,6 +570,17 @@
   function extractLinks(val) {
     if (Array.isArray(val)) val = val.join(' ');
     const matches = String(val || '').match(/https?:\/\/[^\s"'<>()]+/g) || [];
+    const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
+    return [...new Set(cleaned)];
+  }
+
+  // Extract distinct http(s) URLs for the publication / ISEF links. These are clean
+  // URLs but can arrive comma-joined (with blank lookup slots already dropped by the
+  // feed). Splits on whitespace/commas and keeps in-URL parentheses (some article
+  // URLs contain them), so it renders proper links instead of a raw comma string.
+  function urlList(val) {
+    if (Array.isArray(val)) val = val.join(' ');
+    const matches = String(val || '').match(/https?:\/\/[^\s,]+/g) || [];
     const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
     return [...new Set(cleaned)];
   }
@@ -940,10 +952,10 @@
     const workLink = isISEFStatus(s.isefStatus)
       ? (nonBlank(s.isefPublicationLink) ? s.isefPublicationLink : s.publicationLink)
       : (nonBlank(s.publicationLink) ? s.publicationLink : s.isefPublicationLink);
-    const workURL = toURL(workLink);
-    const pubVal = workURL
-      ? `<a href="${esc(workURL)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(workURL)}</a>`
-      : (nonBlank(workLink) ? esc(workLink) : '');
+    const workURLs = urlList(workLink);
+    const pubVal = workURLs.length
+      ? workURLs.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`).join('<br>')
+      : (/[a-z0-9]/i.test(workLink || '') ? esc(workLink) : '');
 
     // Fallback shown ONLY when the student has neither a publication nor an ISEF
     // link. Uses the link(s) only from the journal-website field — notes stripped,
