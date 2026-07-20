@@ -15,7 +15,9 @@ const FIELDS = [
 
 const REC_ID_RE = /^rec[A-Za-z0-9]{14}$/;
 const clean = val => {
-  if (Array.isArray(val)) val = val.join(", ");
+  // Lookups return one value per linked record; some are empty. Drop the blanks
+  // before joining so we don't get artifacts like ", , https://…" from empty slots.
+  if (Array.isArray(val)) val = val.filter(v => v != null && String(v).trim() !== "").join(", ");
   val = (val || "").toString().trim();
   return REC_ID_RE.test(val) ? "" : val;
 };
