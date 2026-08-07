@@ -1,1 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lumiere Education — Student Profiles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Tokens ───────────────────────────────────────── */
+    :root {
+      --navy:        #1e2a6e;
+      --navy-deep:   #141d50;
+      --navy-darker: #0e1438;
+      --crimson:     #e8193c;
+      --crimson-lt:  #ff3355;
+      --white:       #ffffff;
+      --off:         #f5f6fb;
+      --muted:       #6b7280;
+      --border:      #dde1f0;
 
+      --ff-display: 'DM Serif Display', Georgia, serif;
+      --ff-body:    'Inter', system-ui, sans-serif;
+
+      --radius:       10px;
+      --shadow:       0 2px 12px rgba(30,42,110,.08);
+      --shadow-hover: 0 6px 28px rgba(30,42,110,.16);
+    }
+
+    /* ── Reset ────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--ff-body);
+      background: var(--navy);
+      color: var(--white);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Header (white) ───────────────────────────────── */
+    .site-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 clamp(1.5rem, 5vw, 3rem);
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: 1rem 0;
+    }
+    .logo-wrap img {
+      height: 52px;
+      width: auto;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .header-meta-text {
+      text-align: right;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    #last-updated {
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    /* ── Refresh Button ───────────────────────────────── */
+    #refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .5rem .9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--white);
+      color: var(--navy);
+      font-family: var(--ff-body);
+      font-size: .85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, opacity .15s;
+      white-space: nowrap;
+    }
+    #refresh-btn:hover:not(:disabled) {
+      background: var(--off);
+      border-color: var(--navy);
+    }
+    #refresh-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    #refresh-btn .spin {
+      display: inline-block;
+      transition: transform .3s;
+    }
+    #refresh-btn.loading .spin {
+      animation: spin .7s linear infinite;
+    }
+
+    /* ── Hero (dark navy) ─────────────────────────────── */
+    .hero {
+      background: var(--navy-deep);
+      padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 5vw, 3rem) clamp(2rem, 5vw, 3.5rem);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .hero-inner { max-width: 1200px; margin: 0 auto; }
+    .hero h1 {
+      font-family: var(--ff-display);
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      color: var(--white);
+      line-height: 1.15;
+      max-width: 640px;
+    }
+    .hero h1 em { font-style: italic; color: var(--crimson-lt); }
+    .hero-sub {
+      margin-top: .85rem;
+      color: rgba(255,255,255,.6);
+      font-size: clamp(.9rem, 2vw, 1.05rem);
+      max-width: 520px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: .15rem; }
+    .stat-num {
+      font-family: var(--ff-display);
+      font-size: 2rem;
+      color: var(--white);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: .75rem;
+      color: rgba(255,255,255,.45);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* ── Controls (dark navy, sticky) ────────────────── */
+    .controls-bar {
+      background: var(--navy-deep);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 1rem clamp(1.5rem, 5vw, 3rem);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .controls-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: .85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,.4);
+      pointer-events: none;
+    }
+    #search {
+      width: 100%;
+      padding: .6rem .9rem .6rem 2.4rem;
+      border: 1.5px solid rgba(255,255,255,.15);
+      border-radius: 6px;
+      font-family: var(--ff-body);
+      font-size: .9rem;
+      color: var(--white);
+      background: rgba(255,255,255,.08);
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    #search:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.12); }
+    #search::placeholder { color: rgba(255,255,255,.35); }
+
+    .filter-group { display: flex; gap: .5rem; flex-wrap: wrap; }
+    select {
+      padding: .6rem .85rem;
+      padding-right: 2rem;
+      border: 1.5px solid rgba(255,255,255,.15);
+      border-radius: 6px;
+      font-family: var(--ff-body);
+      font-size: .875rem;
+      color: var(--white);
+      background: rgba(255,255,255,.08);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .6rem center;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      transition: border-color .15s;
+    }
+    select:focus { border-color: rgba(255,255,255,.4); }
+    select option { background: var(--navy-deep); color: var(--white); }
+
+    /* Highlight the links filter when active */
+    #filter-links.active {
+      border-color: var(--crimson-lt);
+      background-color: rgba(232,25,60,.18);
+    }
+
+    #result-count {
+      font-size: .8rem;
+      color: rgba(255,255,255,.35);
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    /* ── Main (white) ─────────────────────────────────── */
+    .main {
+      background: var(--white);
+      width: 100%;
+      padding: 2rem clamp(1.5rem, 5vw, 3rem) 4rem;
+    }
+    .grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* ── Card (light) ─────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      transition: box-shadow .2s, transform .2s;
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--crimson);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+    .card-name {
+      font-family: var(--ff-display);
+      font-size: 1.2rem;
+      line-height: 1.25;
+      color: var(--navy-deep);
+    }
+    .card-country {
+      font-size: .75rem;
+      background: var(--off);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .2rem .55rem;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .card-meta { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+    .tag {
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: .2rem .55rem;
+      border-radius: 4px;
+    }
+    .tag-vertical { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .tag-cohort   { background: #eef0fb; color: var(--navy); }
+    .tag-year     { background: #fff0f3; color: var(--crimson); border: 1px solid #ffd0d9; }
+    .tag-field    { background: #f0fdf4; color: #166534; }
+    .tag-isef     { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+
+    .card-question {
+      font-size: .9rem;
+      color: #374151;
+      line-height: 1.55;
+      border-left: 2px solid var(--crimson);
+      padding-left: .75rem;
+      font-style: italic;
+    }
+    .card-question a {
+      color: var(--navy);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .card-journal {
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-journal a {
+      color: var(--navy);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* ── Empty / Error / Loading ──────────────────────── */
+    .state-msg {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 5rem 2rem;
+      color: var(--muted);
+    }
+    .state-msg svg { margin: 0 auto 1rem; opacity: .35; }
+    .state-msg h2 {
+      font-family: var(--ff-display);
+      font-size: 1.5rem;
+      color: var(--navy);
+      margin-bottom: .5rem;
+    }
+    .state-msg code {
+      background: var(--off);
+      padding: .1rem .4rem;
+      border-radius: 4px;
+      font-size: .85em;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--crimson);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Modal ────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(8,12,35,.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.35);
+      padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: var(--off);
+      border: none;
+      border-radius: 6px;
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 1.1rem;
+      transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: var(--border); color: var(--navy); }
+    .modal-name {
+      font-family: var(--ff-display);
+      font-size: 1.75rem;
+      color: var(--navy-deep);
+      margin-bottom: .5rem;
+      padding-right: 2.5rem;
+    }
+    .modal-divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+    .modal-section { margin-top: 1.25rem; }
+    .modal-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: .35rem;
+    }
+    .modal-value { font-size: .95rem; color: #1f2937; line-height: 1.6; }
+    .modal-value.italic {
+      font-style: italic;
+      border-left: 2px solid var(--crimson);
+      padding-left: .75rem;
+    }
+
+    /* ── Footer ───────────────────────────────────────── */
+    footer {
+      background: var(--navy-darker);
+      color: rgba(255,255,255,.3);
+      text-align: center;
+      padding: 1.5rem;
+      font-size: .78rem;
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 600px) {
+      .hero-stats { gap: 1.5rem; }
+      .grid { grid-template-columns: 1fr; }
+      #refresh-btn span:not(.spin) { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card { transition: none; }
+      .spinner { animation: none; }
+      #refresh-btn.loading .spin { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header (white) ───────────────────────────────── -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="Lumiere_logo.png" alt="Lumiere Education" />
+    </div>
+    <div class="header-meta">
+      <div class="header-meta-text">
+        Automatically refreshes every hour<br>
+        Last updated: <span id="last-updated">—</span>
+      </div>
+      <button id="refresh-btn" aria-label="Refresh data">
+        <span class="spin">↻</span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── Hero (dark navy) ──────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Student Research<br><em>Profiles</em></h1>
+    <p class="hero-sub">As many of our students have successfully published in a variety of journals, this page presents some of our publication results!</p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-total">—</span>
+        <span class="stat-label">Students</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-countries">—</span>
+        <span class="stat-label">Countries</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-fields">—</span>
+        <span class="stat-label">Research Fields</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Controls (dark navy, sticky) ─────────────────── -->
+<div class="controls-bar">
+  <div class="controls-inner">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="search" id="search" placeholder="Search by name, question, field…" autocomplete="off" />
+    </div>
+    <div class="filter-group">
+      <select id="filter-field" aria-label="Filter by research field">
+        <option value="">All Research Fields</option>
+      </select>
+      <select id="filter-cohort" aria-label="Filter by cohort">
+        <option value="">All Cohorts</option>
+      </select>
+      <select id="filter-country" aria-label="Filter by country">
+        <option value="">All Countries</option>
+      </select>
+      <select id="filter-links" aria-label="Filter by links">
+        <option value="">All Students</option>
+        <option value="has-url">With Publication Link</option>
+        <option value="has-website">With Link to Publication Website</option>
+        <option value="has-journal">With Journal Publication</option>
+      </select>
+    </div>
+    <span id="result-count"></span>
+  </div>
+</div>
+
+<!-- ── Main (white) ──────────────────────────────────── -->
+<main class="main">
+  <div class="grid" id="grid">
+    <div class="state-msg">
+      <div class="spinner"></div>
+      <p>Loading student profiles…</p>
+    </div>
+  </div>
+</main>
+
+<!-- ── Modal ─────────────────────────────────────────── -->
+<div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <div class="modal-name" id="modal-name"></div>
+    <div class="card-meta" id="modal-tags"></div>
+    <div class="modal-divider"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Footer ────────────────────────────────────────── -->
+<footer>
+  © Lumiere Education · Profiles updated automatically from Airtable
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+  const isURL = s => { try { return /^https?:\/\//.test(s) && Boolean(new URL(s)); } catch { return false; } };
+  const isISEFStatus = s => s && ['ISEF Winner', 'ISEF Finalist'].includes(s.trim());
+  const nonBlank = v => !!String(v == null ? '' : v).trim();
+
+  // Safely extract a valid URL from a field that may arrive as a string or array from Airtable
+  function toURL(val) {
+    if (Array.isArray(val)) return val.find(v => isURL(v)) || '';
+    return isURL(val) ? val : '';
+  }
+
+  // The journal-website lookup arrives as multiline text that may hold more than
+  // one link alongside notes like "(Do not use website for submission)". Pull out
+  // every http(s) link, drop the surrounding text, strip trailing punctuation,
+  // and de-duplicate so only distinct URLs remain.
+  function extractLinks(val) {
+    if (Array.isArray(val)) val = val.join(' ');
+    const matches = String(val || '').match(/https?:\/\/[^\s"'<>()]+/g) || [];
+    const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
+    return [...new Set(cleaned)];
+  }
+
+  // Extract distinct http(s) URLs for the publication / ISEF links. These are clean
+  // URLs but can arrive comma-joined (with blank lookup slots already dropped by the
+  // feed). Splits on whitespace/commas and keeps in-URL parentheses (some article
+  // URLs contain them), so it renders proper links instead of a raw comma string.
+  function urlList(val) {
+    if (Array.isArray(val)) val = val.join(' ');
+    const matches = String(val || '').match(/https?:\/\/[^\s,]+/g) || [];
+    const cleaned = matches.map(u => u.replace(/[.,;:!?]+$/, '')).filter(Boolean);
+    return [...new Set(cleaned)];
+  }
+
+  // When the journal-website field holds several DIFFERENT links, keep only the one
+  // for the journal of acceptance. The field carries URLs only (never the journal
+  // name), so we score each link against the acceptance journal's name: its acronym
+  // (e.g. "International Journal of High School Research" -> "ijhsr", matching
+  // ijhsr.terrajournals.org) and its distinctive words (e.g. "Oxford" -> oxfordjss.org,
+  // "China"/"Hands" -> chinahandsmagazine.org). Common filler words are ignored so
+  // generic terms like "journal" or "research" don't cause false matches.
+  const NAME_STOP = new Set(['the','of','and','for','in','on','a','an','to','by','with',
+    'journal','journals','conference','conferences','international','national','academic',
+    'research','review','reviews','student','students','science','sciences','scientific',
+    'high','school','annual','proceedings','society','association','world','global','open',
+    'letters','advances','studies','education']);
+  const ARTICLE_STOP = new Set(['the','of','and','for','in','on','a','an','to','by','with']);
+
+  const urlBlob = u => u.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  function nameTokens(name) {
+    return (String(name || '').toLowerCase().match(/[a-z0-9]+/g) || [])
+      .filter(t => t.length >= 3 && !NAME_STOP.has(t));
+  }
+  function nameAcronym(name) {
+    return (String(name || '').toLowerCase().match(/[a-z]+/g) || [])
+      .filter(w => !ARTICLE_STOP.has(w)).map(w => w[0]).join('');
+  }
+  function scoreURL(url, name) {
+    const blob = urlBlob(url);
+    let score = 0;
+    for (const t of nameTokens(name)) if (blob.includes(t)) score += 2;
+    const ac = nameAcronym(name);
+    if (ac.length >= 3 && blob.includes(ac)) score += 3;
+    return score;
+  }
+  // Returns the journal-website link(s) to show: [] when none, the single distinct
+  // link when there's only one, or the best match to the journal of acceptance when
+  // there are several. Falls back to resubmission name, then the first link.
+  function pickJournalWebsite(s) {
+    const links = extractLinks(s.journalWebsite);
+    if (links.length <= 1) return links;
+    const name = s.journal || s.journalResubmission || '';
+    let best = '', bestScore = 0;
+    if (name) for (const u of links) {
+      const sc = scoreURL(u, name);
+      if (sc > bestScore) { bestScore = sc; best = u; }
+    }
+    return [best || links[0]];
+  }
+
+  // Journal of Acceptance if present, otherwise Journal of Resubmission.
+  // Returns null if neither is set.
+  function getJournalInfo(s) {
+    if (s.journal) return { label: 'Journal of Acceptance', text: s.journal };
+    if (s.journalResubmission) return { label: 'Journal of Resubmission', text: s.journalResubmission };
+    return null;
+  }
+
+  // Renders journal text as a link if it's a URL, plain text otherwise
+  function journalHTML(info) {
+    if (!info) return '';
+    const url = toURL(info.text);
+    return url
+      ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(info.text)}</a>`
+      : esc(info.text);
+  }
+
+  // "With Publication Link" = the student has a direct link to their own work:
+  // Link to Publication is not empty OR ISEF Publication Link is not empty.
+  // This is presence-based (not empty), not URL-validity-based.
+  function hasPublicationLink(s) {
+    return nonBlank(s.publicationLink) || nonBlank(s.isefPublicationLink);
+  }
+
+  // "With Link to Publication Website" = the student has NEITHER of the two links
+  // above, but the Journal of Publication Website field contains at least one link.
+  function hasJournalWebsiteOnly(s) {
+    return !hasPublicationLink(s) && extractLinks(s.journalWebsite).length > 0;
+  }
+
+  // Reformats "2023 Summer Cohort" → "Summer 2023". Falls back to the raw
+  // value if the pattern doesn't match (so nothing breaks for unexpected data).
+  function formatCohort(cohort) {
+    if (!cohort) return '';
+    const season = cohort.match(/\b(Spring|Summer|Fall|Winter)\b/i);
+    const year   = cohort.match(/\b(20\d{2})\b/);
+    if (season && year) return `${season[1]} ${year[1]}`;
+    return cohort;
+  }
+
+  // Returns the degree with the correct indefinite article, e.g.:
+  //   "PhD"   → "a PhD"    (P sounds like "pee"  → consonant)
+  //   "MPhil" → "an MPhil" (M sounds like "em"   → vowel)
+  //   "MSc"   → "an MSc"   (M sounds like "em"   → vowel)
+  //   "Other" → "a degree" (catch-all)
+  // Rule: letters whose names start with a vowel sound get "an".
+  function degreeWithArticle(degree) {
+    if (!degree) return null;
+    const d = degree.trim();
+    if (/^other/i.test(d)) return 'a degree';
+    // Letters whose spoken name begins with a vowel sound
+    const vowelSoundFirst = new Set(['A','E','F','H','I','L','M','N','O','R','S','X']);
+    const article = vowelSoundFirst.has(d[0].toUpperCase()) ? 'an' : 'a';
+    return `${article} ${d}`;
+  }
+
+  // Builds a plain-text (HTML-safe) profile sentence for a student card.
+  // Template:
+  //   S1: identity + enrollment
+  //   S2: mentor intro + research field
+  //   S3: achievement (journal, ISEF, or both)
+  function buildDescription(s) {
+    const sentences = [];
+
+    // ── Sentence 1: identity + enrollment ──
+    const grade = (s.schoolGrade || '').trim();
+    const isUniversity = grade.toLowerCase().includes('university');
+    const intro = grade
+      ? `${esc(s.studentName)} is a ${esc(grade)}${isUniversity ? '' : ' grade'} student`
+      : `${esc(s.studentName)} is a student`;
+    const countryLabel = s.country === 'United States of America' ? 'the US' : s.country;
+    const fromCountry = s.country ? ` from ${esc(countryLabel)}` : '';
+    let enrolled = '';
+    if (s.programType && s.cohort) {
+      enrolled = ` who enrolled in our ${esc(s.programType)} in ${esc(formatCohort(s.cohort))}`;
+    } else if (s.programType) {
+      enrolled = ` who enrolled in our ${esc(s.programType)}`;
+    } else if (s.cohort) {
+      enrolled = ` who enrolled in ${esc(formatCohort(s.cohort))}`;
+    }
+    sentences.push(`${intro}${fromCountry}${enrolled}.`);
+
+    // ── Sentence 2: mentor + research field ──
+    const nameParts = s.studentName ? s.studentName.trim().split(/\s+/) : [];
+    const nameRef   = esc(nameParts.length > 1 ? nameParts[0] : s.studentName);
+    const hasField  = !!s.mentorField;
+
+    if (s.mentorName) {
+      // Build the mentor qualifier (degree + university)
+      const isPhD = (s.mentorDegreeType || '').trim().toUpperCase() === 'PHD';
+      const mentorDisplayName = isPhD ? `Dr. ${s.mentorName}` : s.mentorName;
+      let qualifier = '';
+      if (s.mentorDegreeType && s.mentorUniversity) {
+        const degreePhrase = degreeWithArticle(s.mentorDegreeType);
+        qualifier = `, who obtained ${esc(degreePhrase)} from ${esc(s.mentorUniversity)}`;
+      } else if (s.mentorDegreeType) {
+        const degreePhrase = degreeWithArticle(s.mentorDegreeType);
+        qualifier = `, who holds ${esc(degreePhrase)}`;
+      } else if (s.mentorUniversity) {
+        qualifier = ` from ${esc(s.mentorUniversity)}`;
+      }
+      const researchClause = hasField
+        ? `${nameRef} conducted research in ${esc(s.mentorField)}`
+        : `${nameRef} pursued innovative research`;
+      sentences.push(`${researchClause} with the support of their mentor, ${esc(mentorDisplayName)}${qualifier}.`);
+    } else if (hasField) {
+      sentences.push(`${nameRef} conducted research in ${esc(s.mentorField)}.`);
+    }
+
+    // ── Sentence 3: achievement ──
+    const journalName = s.journal || s.journalResubmission || '';
+    const hasJournal  = !!journalName;
+    const hasISEF     = isISEFStatus(s.isefStatus);
+
+    if (hasJournal && hasISEF) {
+      sentences.push(`By the end of their program, they successfully published in ${esc(journalName)} and were also recognized as an ${esc(s.isefStatus)}.`);
+    } else if (hasJournal) {
+      sentences.push(`By the end of their program, they successfully published in ${esc(journalName)}.`);
+    } else if (hasISEF) {
+      sentences.push(`By the end of their program, they were recognized as an ${esc(s.isefStatus)}.`);
+    }
+
+    return sentences.join(' ');
+  }
+
+  let ALL_STUDENTS = [];
+  let isLoading = false;
+
+  async function loadData() {
+    if (isLoading) return;
+
+    isLoading = true;
+    const btn = $('refresh-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.querySelector('span:not(.spin)').textContent = 'Refreshing…';
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+
+    try {
+      const res = await fetch('/api/data', { signal: controller.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      ALL_STUDENTS = data.students || [];
+      if (data.updatedAt) {
+        const d = new Date(data.updatedAt);
+        $('last-updated').textContent = d.toLocaleString('en-US', {
+          month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+        });
+      }
+      initStats();
+      resetFilters();
+      populateFilters();
+      renderCards(ALL_STUDENTS);
+    } catch (e) {
+      const msg = e.name === 'AbortError'
+        ? 'Request timed out. Please try again.'
+        : 'Could not reach <code>/api/data</code>. Check your Vercel function and environment variables.';
+      $('grid').innerHTML = `
+        <div class="state-msg">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <h2>Profiles unavailable</h2>
+          <p>${msg}</p>
+        </div>`;
+    } finally {
+      clearTimeout(timeout);
+      isLoading = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        btn.querySelector('span:not(.spin)').textContent = 'Refresh';
+      }
+    }
+  }
+
+  function resetFilters() {
+    ['filter-field', 'filter-cohort', 'filter-country'].forEach(id => {
+      const sel = $(id);
+      while (sel.options.length > 1) sel.remove(1);
+    });
+    $('search').value = '';
+    $('filter-links').value = '';
+    $('filter-links').classList.remove('active');
+  }
+
+  function initStats() {
+    $('stat-total').textContent     = ALL_STUDENTS.length;
+    $('stat-countries').textContent = new Set(ALL_STUDENTS.map(s => s.country).filter(Boolean)).size;
+    $('stat-fields').textContent    = new Set(ALL_STUDENTS.map(s => s.mentorField).filter(Boolean)).size;
+  }
+
+  function populateFilters() {
+    const researchFields = [...new Set(ALL_STUDENTS.map(s => s.mentorField).filter(Boolean))].sort();
+    const cohorts   = [...new Set(ALL_STUDENTS.map(s => s.cohort).filter(Boolean))].sort();
+    const countries = [...new Set(ALL_STUDENTS.map(s => s.country).filter(Boolean))].sort();
+
+    const fill = (id, items) => {
+      const sel = $(id);
+      items.forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        sel.appendChild(o);
+      });
+    };
+    fill('filter-field', researchFields);
+    fill('filter-cohort', cohorts);
+    fill('filter-country', countries);
+  }
+
+  function getFiltered() {
+    const q        = $('search').value.trim().toLowerCase();
+    const researchField = $('filter-field').value;
+    const cohort   = $('filter-cohort').value;
+    const country  = $('filter-country').value;
+    const links    = $('filter-links').value;
+
+    return ALL_STUDENTS.filter(s => {
+      if (researchField && s.mentorField !== researchField) return false;
+      if (cohort   && s.cohort !== cohort) return false;
+      if (country  && s.country !== country) return false;
+      if (links === 'has-url' && !hasPublicationLink(s)) return false;
+      if (links === 'has-website' && !hasJournalWebsiteOnly(s)) return false;
+      if (links === 'has-journal' && !getJournalInfo(s)) return false;
+      if (q) {
+        const hay = [s.studentName, s.researchQuestion, s.mentorField, s.journal,
+                     s.cohort, s.country, s.isefStatus]
+          .join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function applyFilters() {
+    // Highlight the links dropdown when it's actively filtering
+    $('filter-links').classList.toggle('active', $('filter-links').value !== '');
+    renderCards(getFiltered());
+  }
+
+  ['search', 'filter-field', 'filter-cohort', 'filter-country', 'filter-links'].forEach(id => {
+    $(id).addEventListener('input', applyFilters);
+    $(id).addEventListener('change', applyFilters);
+  });
+
+  function renderCards(students) {
+    const grid = $('grid');
+    $('result-count').textContent = `${students.length} profile${students.length !== 1 ? 's' : ''}`;
+
+    if (!students.length) {
+      grid.innerHTML = `
+        <div class="state-msg">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <h2>No profiles found</h2>
+          <p>Try adjusting your search or filters.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = students.map((s, i) => {
+      const journalDisplay = journalHTML(getJournalInfo(s));
+      return `
+      <article class="card" tabindex="0" data-idx="${i}" role="button" aria-label="View profile for ${esc(s.studentName)}">
+        <div class="card-header">
+          <div class="card-name">${esc(s.studentName) || '—'}</div>
+          ${s.country ? `<span class="card-country">${esc(s.country)}</span>` : ''}
+        </div>
+        <div class="card-meta">
+          ${s.cohort                   ? `<span class="tag tag-cohort">${esc(s.cohort)}</span>` : ''}
+          ${s.graduationYear           ? `<span class="tag tag-year">Class of ${esc(String(s.graduationYear))}</span>` : ''}
+          ${s.mentorField              ? `<span class="tag tag-field">${esc(s.mentorField)}</span>` : ''}
+          ${isISEFStatus(s.isefStatus) ? `<span class="tag tag-isef">${esc(s.isefStatus)}</span>` : ''}
+        </div>
+        ${journalDisplay ? `<p class="card-question">${journalDisplay}</p>` : ''}
+      </article>`;
+    }).join('');
+
+    grid.querySelectorAll('.card').forEach(card => {
+      const open = () => openModal(students[+card.dataset.idx]);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => (e.key === 'Enter' || e.key === ' ') && open());
+    });
+  }
+
+  function openModal(s) {
+    $('modal-name').textContent = s.studentName || '—';
+    $('modal-tags').innerHTML = [
+      s.cohort                   ? `<span class="tag tag-cohort">${esc(s.cohort)}</span>` : '',
+      s.graduationYear           ? `<span class="tag tag-year">Class of ${esc(String(s.graduationYear))}</span>` : '',
+      s.mentorField              ? `<span class="tag tag-field">${esc(s.mentorField)}</span>` : '',
+      isISEFStatus(s.isefStatus) ? `<span class="tag tag-isef">${esc(s.isefStatus)}</span>` : '',
+      s.country                  ? `<span class="tag" style="background:var(--off);border:1px solid var(--border);color:var(--muted)">${esc(s.country)}</span>` : '',
+    ].join('');
+
+    const section = (label, value, italic = false) => value ? `
+      <div class="modal-section">
+        <div class="modal-label">${label}</div>
+        <div class="modal-value${italic ? ' italic' : ''}">${value}</div>
+      </div>` : '';
+
+    const journalInfo = getJournalInfo(s);
+    const journalURLForModal = journalInfo ? toURL(journalInfo.text) : '';
+    const journalVal = journalInfo
+      ? (journalURLForModal
+          ? `<a href="${esc(journalURLForModal)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(journalInfo.text)}</a>`
+          : esc(journalInfo.text))
+      : '';
+
+    // Direct link to the student's own work, presence-based: prefer the ISEF link
+    // for ISEF students, otherwise the publication link, falling back to whichever
+    // is actually filled in.
+    const workLink = isISEFStatus(s.isefStatus)
+      ? (nonBlank(s.isefPublicationLink) ? s.isefPublicationLink : s.publicationLink)
+      : (nonBlank(s.publicationLink) ? s.publicationLink : s.isefPublicationLink);
+    const workURLs = urlList(workLink);
+    const pubVal = workURLs.length
+      ? workURLs.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`).join('<br>')
+      : (/[a-z0-9]/i.test(workLink || '') ? esc(workLink) : '');
+
+    // Fallback shown ONLY when the student has neither a publication nor an ISEF
+    // link. Uses the link(s) only from the journal-website field — notes stripped,
+    // distinct links de-duplicated.
+    const journalSiteVal = hasPublicationLink(s)
+      ? ''
+      : pickJournalWebsite(s)
+          .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;text-underline-offset:2px">${esc(u)}</a>`)
+          .join('<br>');
+
+    $('modal-body').innerHTML = [
+      `<div class="modal-section" id="ai-journey-section">
+        <div class="modal-label">Student Journey</div>
+        <div class="modal-value" id="ai-journey-text">${buildDescription(s)}</div>
+      </div>`,
+      s.researchQuestion ? '<div class="modal-divider"></div>' + section('Research Question', esc(s.researchQuestion), true) : '',
+      journalVal ? '<div class="modal-divider"></div>' + section(journalInfo.label, journalVal) : '',
+      s.isefStatus ? '<div class="modal-divider"></div>' + section('ISEF Status', esc(s.isefStatus)) : '',
+      pubVal
+        ? '<div class="modal-divider"></div>' + section('Publication', pubVal)
+        : (journalSiteVal ? '<div class="modal-divider"></div>' + section('Journal of Publication Website', journalSiteVal) : ''),
+    ].join('');
+
+    $('modal-backdrop').classList.add('open');
+    $('modal-close').focus();
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    $('modal-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  $('modal-close').addEventListener('click', closeModal);
+  $('modal-backdrop').addEventListener('click', e => e.target === $('modal-backdrop') && closeModal());
+  document.addEventListener('keydown', e => e.key === 'Escape' && closeModal());
+
+  $('refresh-btn').addEventListener('click', loadData);
+
+  loadData();
+  setInterval(loadData, 60 * 60 * 1000);
+</script>
+</body>
+</html>
