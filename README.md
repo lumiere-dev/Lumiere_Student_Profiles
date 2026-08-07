@@ -1,6 +1,6 @@
-# Lumiere Student Profiles — Cloudflare Pages deploy
+# Lumiere Student Profiles
 
-Pulls from Generated Student Profiles to live website deployed on Cloudflare Pages.
+Pulls from Generated Student Profiles to live website deployed on Railways (previously deployed on Cloudfare)
 
 Folder layout:
 
