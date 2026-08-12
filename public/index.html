@@ -687,6 +687,15 @@
     return `${article} ${d}`;
   }
 
+  // Combines first name + last initial for display, e.g. "Jane D."
+  // Falls back gracefully if either piece is missing.
+  function displayName(s) {
+    const first = (s.firstName || '').trim();
+    const initial = (s.lastInitial || '').trim();
+    if (first && initial) return `${first} ${initial}`;
+    return first;
+  }
+
   // Builds a plain-text (HTML-safe) profile sentence for a student card.
   // Template:
   //   S1: identity + enrollment
@@ -860,7 +869,7 @@
       if (links === 'has-website' && !hasJournalWebsiteOnly(s)) return false;
       if (links === 'has-journal' && !getJournalInfo(s)) return false;
       if (q) {
-        const hay = [s.firstName, s.researchQuestion, s.mentorField, s.journal,
+        const hay = [s.firstName, s.lastInitial, s.researchQuestion, s.mentorField, s.journal,
                      s.cohort, s.country, s.isefStatus]
           .join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
@@ -899,9 +908,9 @@
     grid.innerHTML = students.map((s, i) => {
       const journalDisplay = journalHTML(getJournalInfo(s));
       return `
-      <article class="card" tabindex="0" data-idx="${i}" role="button" aria-label="View profile for ${esc(s.firstName)}">
+      <article class="card" tabindex="0" data-idx="${i}" role="button" aria-label="View profile for ${esc(displayName(s))}">
         <div class="card-header">
-          <div class="card-name">${esc(s.firstName) || '—'}</div>
+          <div class="card-name">${esc(displayName(s)) || '—'}</div>
           ${s.country ? `<span class="card-country">${esc(s.country)}</span>` : ''}
         </div>
         <div class="card-meta">
@@ -922,7 +931,7 @@
   }
 
   function openModal(s) {
-    $('modal-name').textContent = s.firstName || '—';
+    $('modal-name').textContent = displayName(s) || '—';
     $('modal-tags').innerHTML = [
       s.cohort                   ? `<span class="tag tag-cohort">${esc(s.cohort)}</span>` : '',
       s.graduationYear           ? `<span class="tag tag-year">Class of ${esc(String(s.graduationYear))}</span>` : '',
