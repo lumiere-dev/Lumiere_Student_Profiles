@@ -699,8 +699,8 @@
     const grade = (s.schoolGrade || '').trim();
     const isUniversity = grade.toLowerCase().includes('university');
     const intro = grade
-      ? `${esc(s.studentName)} is a ${esc(grade)}${isUniversity ? '' : ' grade'} student`
-      : `${esc(s.studentName)} is a student`;
+      ? `${esc(s.firstName)} is a ${esc(grade)}${isUniversity ? '' : ' grade'} student`
+      : `${esc(s.firstName)} is a student`;
     const countryLabel = s.country === 'United States of America' ? 'the US' : s.country;
     const fromCountry = s.country ? ` from ${esc(countryLabel)}` : '';
     let enrolled = '';
@@ -714,8 +714,7 @@
     sentences.push(`${intro}${fromCountry}${enrolled}.`);
 
     // ── Sentence 2: mentor + research field ──
-    const nameParts = s.studentName ? s.studentName.trim().split(/\s+/) : [];
-    const nameRef   = esc(nameParts.length > 1 ? nameParts[0] : s.studentName);
+    const nameRef   = esc(s.firstName);
     const hasField  = !!s.mentorField;
 
     if (s.mentorName) {
@@ -861,7 +860,7 @@
       if (links === 'has-website' && !hasJournalWebsiteOnly(s)) return false;
       if (links === 'has-journal' && !getJournalInfo(s)) return false;
       if (q) {
-        const hay = [s.studentName, s.researchQuestion, s.mentorField, s.journal,
+        const hay = [s.firstName, s.researchQuestion, s.mentorField, s.journal,
                      s.cohort, s.country, s.isefStatus]
           .join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
@@ -900,9 +899,9 @@
     grid.innerHTML = students.map((s, i) => {
       const journalDisplay = journalHTML(getJournalInfo(s));
       return `
-      <article class="card" tabindex="0" data-idx="${i}" role="button" aria-label="View profile for ${esc(s.studentName)}">
+      <article class="card" tabindex="0" data-idx="${i}" role="button" aria-label="View profile for ${esc(s.firstName)}">
         <div class="card-header">
-          <div class="card-name">${esc(s.studentName) || '—'}</div>
+          <div class="card-name">${esc(s.firstName) || '—'}</div>
           ${s.country ? `<span class="card-country">${esc(s.country)}</span>` : ''}
         </div>
         <div class="card-meta">
@@ -923,7 +922,7 @@
   }
 
   function openModal(s) {
-    $('modal-name').textContent = s.studentName || '—';
+    $('modal-name').textContent = s.firstName || '—';
     $('modal-tags').innerHTML = [
       s.cohort                   ? `<span class="tag tag-cohort">${esc(s.cohort)}</span>` : '',
       s.graduationYear           ? `<span class="tag tag-year">Class of ${esc(String(s.graduationYear))}</span>` : '',
