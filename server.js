@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 const BASE_ID = "appOhh4711y4cXSfj";
 const TABLE_ID = "tbl86VUnRDEiBphrL";
 const FIELDS = [
-  "Student Name", "Cohort of Program", "Graduation Year",
+  "First Name (Text)", "Cohort of Program", "Graduation Year",
   "Journal of Acceptance (Text)", "Journal of Resubmission (Text)", "PM: Research Question",
   "Research Field", "Country", "Vertical", "ISEF Status",
   "Link to Publication", "ISEF Publication Link",
@@ -68,7 +68,7 @@ app.get("/api/data", async (req, res) => {
         const f = rec.fields;
         records.push({
           id: rec.id,
-          studentName: clean(f["Student Name"]),
+          firstName: clean(f["First Name (Text)"]),
           cohort: clean(f["Cohort of Program"]),
           graduationYear: f["Graduation Year"] || "",
           journal: clean(f["Journal of Acceptance (Text)"]),
