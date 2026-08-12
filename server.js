@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 const BASE_ID = "appOhh4711y4cXSfj";
 const TABLE_ID = "tbl86VUnRDEiBphrL";
 const FIELDS = [
-  "First Name (Text)", "Cohort of Program", "Graduation Year",
+  "First Name (Text)", "Student Name", "Cohort of Program", "Graduation Year",
   "Journal of Acceptance (Text)", "Journal of Resubmission (Text)", "PM: Research Question",
   "Research Field", "Country", "Vertical", "ISEF Status",
   "Link to Publication", "ISEF Publication Link",
@@ -31,6 +31,15 @@ const clean = (val) => {
   }
   val = (val || "").toString().trim();
   return REC_ID_RE.test(val) ? "" : val;
+};
+
+// Derives "J." from a full name like "Jane Doe" or "Maria Del Carmen Ruiz".
+// Only ever used server-side — the full name itself is never sent to the client.
+const lastInitial = (fullName) => {
+  const parts = clean(fullName).trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return "";
+  const last = parts[parts.length - 1];
+  return last.charAt(0).toUpperCase() + ".";
 };
 
 // Serve the static frontend (index.html, css, js, logo, etc.)
@@ -69,6 +78,7 @@ app.get("/api/data", async (req, res) => {
         records.push({
           id: rec.id,
           firstName: clean(f["First Name (Text)"]),
+          lastInitial: lastInitial(f["Student Name"]),
           cohort: clean(f["Cohort of Program"]),
           graduationYear: f["Graduation Year"] || "",
           journal: clean(f["Journal of Acceptance (Text)"]),
