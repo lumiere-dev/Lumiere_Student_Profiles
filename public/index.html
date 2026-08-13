@@ -507,17 +507,13 @@
       <select id="filter-field" aria-label="Filter by research field">
         <option value="">All Research Fields</option>
       </select>
-      <select id="filter-cohort" aria-label="Filter by cohort">
-        <option value="">All Cohorts</option>
-      </select>
       <select id="filter-country" aria-label="Filter by country">
         <option value="">All Countries</option>
       </select>
       <select id="filter-links" aria-label="Filter by links">
         <option value="">All Students</option>
-        <option value="has-url">With Publication Link</option>
-        <option value="has-website">With Link to Publication Website</option>
-        <option value="has-journal">With Journal Publication</option>
+        <option value="has-url">Link to Student Papers</option>
+        <option value="has-journal">Students Who Published in Journals</option>
       </select>
     </div>
     <span id="result-count"></span>
@@ -648,17 +644,11 @@
       : esc(info.text);
   }
 
-  // "With Publication Link" = the student has a direct link to their own work:
+  // "Link to Student Papers" = the student has a direct link to their own work:
   // Link to Publication is not empty OR ISEF Publication Link is not empty.
   // This is presence-based (not empty), not URL-validity-based.
   function hasPublicationLink(s) {
     return nonBlank(s.publicationLink) || nonBlank(s.isefPublicationLink);
-  }
-
-  // "With Link to Publication Website" = the student has NEITHER of the two links
-  // above, but the Journal of Publication Website field contains at least one link.
-  function hasJournalWebsiteOnly(s) {
-    return !hasPublicationLink(s) && extractLinks(s.journalWebsite).length > 0;
   }
 
   // Reformats "2023 Summer Cohort" → "Summer 2023". Falls back to the raw
@@ -821,7 +811,7 @@
   }
 
   function resetFilters() {
-    ['filter-field', 'filter-cohort', 'filter-country'].forEach(id => {
+    ['filter-field', 'filter-country'].forEach(id => {
       const sel = $(id);
       while (sel.options.length > 1) sel.remove(1);
     });
@@ -838,7 +828,6 @@
 
   function populateFilters() {
     const researchFields = [...new Set(ALL_STUDENTS.map(s => s.mentorField).filter(Boolean))].sort();
-    const cohorts   = [...new Set(ALL_STUDENTS.map(s => s.cohort).filter(Boolean))].sort();
     const countries = [...new Set(ALL_STUDENTS.map(s => s.country).filter(Boolean))].sort();
 
     const fill = (id, items) => {
@@ -850,23 +839,19 @@
       });
     };
     fill('filter-field', researchFields);
-    fill('filter-cohort', cohorts);
     fill('filter-country', countries);
   }
 
   function getFiltered() {
     const q        = $('search').value.trim().toLowerCase();
     const researchField = $('filter-field').value;
-    const cohort   = $('filter-cohort').value;
     const country  = $('filter-country').value;
     const links    = $('filter-links').value;
 
     return ALL_STUDENTS.filter(s => {
       if (researchField && s.mentorField !== researchField) return false;
-      if (cohort   && s.cohort !== cohort) return false;
       if (country  && s.country !== country) return false;
       if (links === 'has-url' && !hasPublicationLink(s)) return false;
-      if (links === 'has-website' && !hasJournalWebsiteOnly(s)) return false;
       if (links === 'has-journal' && !getJournalInfo(s)) return false;
       if (q) {
         const hay = [s.firstName, s.lastInitial, s.researchQuestion, s.mentorField, s.journal,
@@ -884,7 +869,7 @@
     renderCards(getFiltered());
   }
 
-  ['search', 'filter-field', 'filter-cohort', 'filter-country', 'filter-links'].forEach(id => {
+  ['search', 'filter-field', 'filter-country', 'filter-links'].forEach(id => {
     $(id).addEventListener('input', applyFilters);
     $(id).addEventListener('change', applyFilters);
   });
